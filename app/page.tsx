@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, createContext, useContext } from 'react';
-import { Home, Search, Settings } from 'lucide-react';
+import { Home as HomeIcon, Search, Settings } from 'lucide-react';
 import HomePage from '@/components/HomePage';
 import SearchPage from '@/components/SearchPage';
 import SettingsPage from '@/components/SettingsPage';
@@ -310,7 +310,7 @@ export default function Home() {
                   activeTab === 'home' ? 'text-purple-400' : isDarkMode ? 'text-gray-400' : 'text-gray-600'
                 }`}
               >
-                <Home size={24} />
+                <HomeIcon size={24} />
                 <span className="text-xs">Home</span>
               </button>
               <button
