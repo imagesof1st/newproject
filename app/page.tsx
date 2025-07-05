@@ -11,7 +11,10 @@ import MinimizedPlayer from '@/components/MinimizedPlayer';
 import MaximizedPlayer from '@/components/MaximizedPlayer';
 import CreatePlaylistModal from '@/components/CreatePlaylistModal';
 import AddToPlaylistModal from '@/components/AddToPlaylistModal';
-import { Song, Playlist } from '@/types';
+import AuthWrapper from '@/components/AuthWrapper';
+import { useAuth } from '@/hooks/useAuth';
+import { useSupabaseData } from '@/hooks/useSupabaseData';
+import { Song } from '@/types';
 
 interface ThemeContextType {
   isDarkMode: boolean;
@@ -25,7 +28,22 @@ const ThemeContext = createContext<ThemeContextType>({
 
 export const useTheme = () => useContext(ThemeContext);
 
-export default function MusicPlayerApp() {
+function MusicPlayerContent() {
+  const { user } = useAuth();
+  const {
+    songs,
+    playlists,
+    likedSongs,
+    loading,
+    toggleLike,
+    createPlaylist,
+    deletePlaylist,
+    renamePlaylist,
+    addSongToPlaylist,
+    removeSongFromPlaylist,
+    recordListeningHistory
+  } = useSupabaseData(user);
+
   const [activeTab, setActiveTab] = useState<'home' | 'search' | 'settings'>('home');
   const [currentPage, setCurrentPage] = useState<'main' | 'playlists' | 'liked'>('main');
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
@@ -35,100 +53,6 @@ export default function MusicPlayerApp() {
   const [showCreatePlaylistModal, setShowCreatePlaylistModal] = useState(false);
   const [showAddToPlaylistModal, setShowAddToPlaylistModal] = useState(false);
   const [selectedSongForPlaylist, setSelectedSongForPlaylist] = useState<Song | null>(null);
-  
-  const [songs, setSongs] = useState<Song[]>([
-    {
-      file_id: 1001,
-      img_id: 2001,
-      name: 'Midnight Dreams',
-      artist: 'Luna Vista',
-      language: 'English',
-      tags: ['pop', 'dreamy', 'night'],
-      views: 2300000,
-      likes: 45000,
-      id: '1001',
-      image: 'https://images.pexels.com/photos/1763075/pexels-photo-1763075.jpeg?auto=compress&cs=tinysrgb&w=300',
-      isLiked: false
-    },
-    {
-      file_id: 1002,
-      img_id: 2002,
-      name: 'Electric Sunset',
-      artist: 'Neon Waves',
-      language: 'English',
-      tags: ['electronic', 'synthwave', 'sunset'],
-      views: 1800000,
-      likes: 38000,
-      id: '1002',
-      image: 'https://images.pexels.com/photos/1190297/pexels-photo-1190297.jpeg?auto=compress&cs=tinysrgb&w=300',
-      isLiked: true
-    },
-    {
-      file_id: 1003,
-      img_id: 2003,
-      name: 'Ocean Breeze',
-      artist: 'Coastal Sound',
-      language: 'English',
-      tags: ['ambient', 'nature', 'relaxing'],
-      views: 3100000,
-      likes: 52000,
-      id: '1003',
-      image: 'https://images.pexels.com/photos/1105666/pexels-photo-1105666.jpeg?auto=compress&cs=tinysrgb&w=300',
-      isLiked: false
-    },
-    {
-      file_id: 1004,
-      img_id: 2004,
-      name: 'City Lights',
-      artist: 'Urban Echo',
-      language: 'English',
-      tags: ['urban', 'hip-hop', 'night'],
-      views: 890000,
-      likes: 23000,
-      id: '1004',
-      image: 'https://images.pexels.com/photos/1671325/pexels-photo-1671325.jpeg?auto=compress&cs=tinysrgb&w=300',
-      isLiked: true
-    },
-    {
-      file_id: 1005,
-      img_id: 2005,
-      name: 'Starlight Symphony',
-      artist: 'Cosmic Harmony',
-      language: 'English',
-      tags: ['classical', 'orchestral', 'space'],
-      views: 1200000,
-      likes: 28000,
-      id: '1005',
-      image: 'https://images.pexels.com/photos/1540406/pexels-photo-1540406.jpeg?auto=compress&cs=tinysrgb&w=300',
-      isLiked: false
-    }
-  ]);
-
-  const [playlists, setPlaylists] = useState<Playlist[]>([
-    {
-      id: '1',
-      name: 'Chill Vibes',
-      songCount: 3,
-      image: 'https://images.pexels.com/photos/1763075/pexels-photo-1763075.jpeg?auto=compress&cs=tinysrgb&w=300',
-      songs: songs.slice(0, 3)
-    },
-    {
-      id: '2',
-      name: 'Workout Mix',
-      songCount: 2,
-      image: 'https://images.pexels.com/photos/1190297/pexels-photo-1190297.jpeg?auto=compress&cs=tinysrgb&w=300',
-      songs: songs.slice(1, 3)
-    },
-    {
-      id: '3',
-      name: 'Study Focus',
-      songCount: 2,
-      image: 'https://images.pexels.com/photos/1105666/pexels-photo-1105666.jpeg?auto=compress&cs=tinysrgb&w=300',
-      songs: songs.slice(2, 4)
-    }
-  ]);
-
-  const likedSongs = songs.filter(song => song.isLiked);
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
@@ -137,6 +61,8 @@ export default function MusicPlayerApp() {
   const handleSongPlay = (song: Song) => {
     setCurrentSong(song);
     setIsPlaying(true);
+    // Record listening history
+    recordListeningHistory(song.id);
   };
 
   const togglePlay = () => {
@@ -153,22 +79,17 @@ export default function MusicPlayerApp() {
     setIsPlayerMaximized(false);
   };
 
-  const toggleLike = (songId: string) => {
-    setSongs(prevSongs => 
-      prevSongs.map(song => 
-        song.id === songId ? { ...song, isLiked: !song.isLiked } : song
-      )
-    );
-    if (currentSong && currentSong.id === songId) {
-      setCurrentSong(prev => prev ? { ...prev, isLiked: !prev.isLiked } : null);
-    }
+  const handleToggleLike = (songId: string) => {
+    toggleLike(songId);
   };
 
   const handlePrevious = () => {
     if (currentSong) {
       const currentIndex = songs.findIndex(song => song.id === currentSong.id);
       const previousIndex = currentIndex > 0 ? currentIndex - 1 : songs.length - 1;
-      setCurrentSong(songs[previousIndex]);
+      const newSong = songs[previousIndex];
+      setCurrentSong(newSong);
+      recordListeningHistory(newSong.id);
     }
   };
 
@@ -176,7 +97,9 @@ export default function MusicPlayerApp() {
     if (currentSong) {
       const currentIndex = songs.findIndex(song => song.id === currentSong.id);
       const nextIndex = currentIndex < songs.length - 1 ? currentIndex + 1 : 0;
-      setCurrentSong(songs[nextIndex]);
+      const newSong = songs[nextIndex];
+      setCurrentSong(newSong);
+      recordListeningHistory(newSong.id);
     }
   };
 
@@ -189,75 +112,23 @@ export default function MusicPlayerApp() {
     return num.toString();
   };
 
-  // Playlist management functions
-  const createPlaylist = (name: string) => {
-    const newPlaylist: Playlist = {
-      id: Date.now().toString(),
-      name,
-      songCount: 0,
-      image: 'https://images.pexels.com/photos/1763075/pexels-photo-1763075.jpeg?auto=compress&cs=tinysrgb&w=300',
-      songs: []
-    };
-    setPlaylists(prev => [...prev, newPlaylist]);
-  };
-
-  const deletePlaylist = (playlistId: string) => {
-    setPlaylists(prev => prev.filter(playlist => playlist.id !== playlistId));
-  };
-
-  const renamePlaylist = (playlistId: string, newName: string) => {
-    setPlaylists(prev => 
-      prev.map(playlist => 
-        playlist.id === playlistId 
-          ? { ...playlist, name: newName }
-          : playlist
-      )
-    );
-  };
-
-  const addSongToPlaylist = (playlistId: string, song: Song) => {
-    setPlaylists(prev => 
-      prev.map(playlist => {
-        if (playlist.id === playlistId) {
-          const songExists = playlist.songs.some(s => s.id === song.id);
-          if (!songExists) {
-            const updatedSongs = [...playlist.songs, song];
-            return {
-              ...playlist,
-              songs: updatedSongs,
-              songCount: updatedSongs.length,
-              image: updatedSongs[0]?.image || playlist.image
-            };
-          }
-        }
-        return playlist;
-      })
-    );
-  };
-
-  const removeSongFromPlaylist = (playlistId: string, songId: string) => {
-    setPlaylists(prev => 
-      prev.map(playlist => {
-        if (playlist.id === playlistId) {
-          const updatedSongs = playlist.songs.filter(song => song.id !== songId);
-          return {
-            ...playlist,
-            songs: updatedSongs,
-            songCount: updatedSongs.length,
-            image: updatedSongs[0]?.image || 'https://images.pexels.com/photos/1763075/pexels-photo-1763075.jpeg?auto=compress&cs=tinysrgb&w=300'
-          };
-        }
-        return playlist;
-      })
-    );
-  };
-
   const handleAddToPlaylist = (song: Song) => {
     setSelectedSongForPlaylist(song);
     setShowAddToPlaylistModal(true);
   };
 
   const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+            <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Loading your music...</p>
+          </div>
+        </div>
+      );
+    }
+
     if (currentPage === 'playlists') {
       return (
         <PlaylistsPage 
@@ -347,7 +218,7 @@ export default function MusicPlayerApp() {
                 onPrevious={handlePrevious}
                 onNext={handleNext}
                 onClose={closePlayer}
-                onToggleLike={() => toggleLike(currentSong.id)}
+                onToggleLike={() => handleToggleLike(currentSong.id)}
                 formatNumber={formatNumber}
               />
             ) : (
@@ -358,7 +229,7 @@ export default function MusicPlayerApp() {
                 onMinimize={togglePlayerSize}
                 onPrevious={handlePrevious}
                 onNext={handleNext}
-                onToggleLike={() => toggleLike(currentSong.id)}
+                onToggleLike={() => handleToggleLike(currentSong.id)}
                 formatNumber={formatNumber}
                 onAddToPlaylist={() => handleAddToPlaylist(currentSong)}
               />
@@ -389,5 +260,13 @@ export default function MusicPlayerApp() {
         />
       </div>
     </ThemeContext.Provider>
+  );
+}
+
+export default function MusicPlayerApp() {
+  return (
+    <AuthWrapper>
+      <MusicPlayerContent />
+    </AuthWrapper>
   );
 }

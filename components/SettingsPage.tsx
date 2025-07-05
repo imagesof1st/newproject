@@ -1,6 +1,7 @@
 import React from 'react';
 import { User, Heart, List, LogOut, ChevronRight, Moon, Sun, Bell, Download } from 'lucide-react';
 import { useTheme } from '@/app/page';
+import { useAuth } from '@/hooks/useAuth';
 
 interface SettingsPageProps {
   onPlaylistsClick: () => void;
@@ -9,6 +10,7 @@ interface SettingsPageProps {
 
 const SettingsPage: React.FC<SettingsPageProps> = ({ onPlaylistsClick, onLikedClick }) => {
   const { isDarkMode, toggleTheme } = useTheme();
+  const { user, signOut } = useAuth();
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
@@ -22,12 +24,24 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onPlaylistsClick, onLikedCl
         {/* Profile Section */}
         <div className="mb-8">
           <div className={`flex items-center p-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white border border-gray-200'} rounded-lg`}>
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mr-4">
-              <User size={24} />
-            </div>
+            {user?.user_metadata?.avatar_url ? (
+              <img 
+                src={user.user_metadata.avatar_url} 
+                alt="Profile" 
+                className="w-16 h-16 rounded-full mr-4"
+              />
+            ) : (
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mr-4">
+                <User size={24} />
+              </div>
+            )}
             <div className="flex-1">
-              <h3 className="font-semibold text-lg">Alex Johnson</h3>
-              <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Premium Member</p>
+              <h3 className="font-semibold text-lg">
+                {user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'User'}
+              </h3>
+              <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
+                {user?.email}
+              </p>
             </div>
             <ChevronRight className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} size={20} />
           </div>
@@ -47,10 +61,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onPlaylistsClick, onLikedCl
                   <List className="mr-3 text-purple-400" size={20} />
                   <span>Playlists</span>
                 </div>
-                <div className="flex items-center">
-                  <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-sm mr-2`}>3 playlists</span>
-                  <ChevronRight className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} size={16} />
-                </div>
+                <ChevronRight className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} size={16} />
               </button>
               
               <button 
@@ -61,10 +72,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onPlaylistsClick, onLikedCl
                   <Heart className="mr-3 text-red-400" size={20} />
                   <span>Liked Songs</span>
                 </div>
-                <div className="flex items-center">
-                  <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-sm mr-2`}>2 songs</span>
-                  <ChevronRight className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} size={16} />
-                </div>
+                <ChevronRight className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} size={16} />
               </button>
 
               <button className={`w-full flex items-center justify-between p-4 ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-white hover:bg-gray-50 border border-gray-200'} rounded-lg transition-colors`}>
@@ -72,10 +80,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onPlaylistsClick, onLikedCl
                   <Download className="mr-3 text-green-400" size={20} />
                   <span>Downloaded</span>
                 </div>
-                <div className="flex items-center">
-                  <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-sm mr-2`}>18 songs</span>
-                  <ChevronRight className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} size={16} />
-                </div>
+                <ChevronRight className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} size={16} />
               </button>
             </div>
           </div>
@@ -115,7 +120,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onPlaylistsClick, onLikedCl
           <div>
             <h2 className={`text-lg font-semibold mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Account</h2>
             <div className="space-y-2">
-              <button className="w-full flex items-center justify-between p-4 bg-red-900/20 border border-red-800 rounded-lg hover:bg-red-900/30 transition-colors">
+              <button 
+                onClick={signOut}
+                className="w-full flex items-center justify-between p-4 bg-red-900/20 border border-red-800 rounded-lg hover:bg-red-900/30 transition-colors"
+              >
                 <div className="flex items-center">
                   <LogOut className="mr-3 text-red-400" size={20} />
                   <span className="text-red-400">Logout</span>
