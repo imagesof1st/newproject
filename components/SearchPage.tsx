@@ -1,0 +1,119 @@
+import React, { useState } from 'react';
+import { Search, Clock, TrendingUp, Music } from 'lucide-react';
+import { Song } from '@/types';
+import { useTheme } from '@/app/page';
+import SongCard from './SongCard';
+
+interface SearchPageProps {
+  songs: Song[];
+  onSongPlay: (song: Song) => void;
+  formatNumber: (num: number) => string;
+  onAddToPlaylist: (song: Song) => void;
+}
+
+const SearchPage: React.FC<SearchPageProps> = ({ songs, onSongPlay, formatNumber, onAddToPlaylist }) => {
+  const { isDarkMode } = useTheme();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [recentSearches] = useState(['Lo-fi beats', 'Chill vibes', 'Study music']);
+
+  const filteredSongs = songs.filter(song =>
+    song.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    song.artist.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    song.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  return (
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+      {/* Header */}
+      <div className={`sticky top-0 ${isDarkMode ? 'bg-gray-900/95' : 'bg-gray-50/95'} backdrop-blur-md z-10 px-4 py-4`}>
+        <h1 className="text-2xl font-bold mb-4">Search</h1>
+        
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} size={20} />
+          <input
+            type="text"
+            placeholder="What do you want to listen to?"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className={`w-full ${isDarkMode ? 'bg-gray-800' : 'bg-white border border-gray-200'} rounded-full py-3 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all`}
+          />
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="px-4 pb-4">
+        {searchQuery === '' ? (
+          <>
+            {/* Recent Searches */}
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold mb-4 flex items-center">
+                <Clock className={`mr-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} size={18} />
+                Recent searches
+              </h2>
+              <div className="space-y-3">
+                {recentSearches.map((search, index) => (
+                  <div key={index} className={`flex items-center justify-between p-3 ${isDarkMode ? 'bg-gray-800' : 'bg-white border border-gray-200'} rounded-lg`}>
+                    <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{search}</span>
+                    <button 
+                      onClick={() => setSearchQuery(search)}
+                      className={`${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'} transition-colors`}
+                    >
+                      <Search size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Browse Categories */}
+            <div>
+              <h2 className="text-lg font-semibold mb-4">Browse all</h2>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { name: 'Pop', color: 'from-pink-500 to-purple-500' },
+                  { name: 'Rock', color: 'from-red-500 to-orange-500' },
+                  { name: 'Hip-Hop', color: 'from-yellow-500 to-green-500' },
+                  { name: 'Electronic', color: 'from-blue-500 to-indigo-500' },
+                  { name: 'Jazz', color: 'from-purple-500 to-pink-500' },
+                  { name: 'Classical', color: 'from-gray-500 to-gray-700' }
+                ].map((category, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSearchQuery(category.name)}
+                    className={`relative p-4 rounded-lg bg-gradient-to-br ${category.color} h-24 overflow-hidden transition-transform hover:scale-105`}
+                  >
+                    <h3 className="font-semibold text-white">{category.name}</h3>
+                    <Music className="absolute bottom-2 right-2 text-white/50" size={32} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Search Results */}
+            <div>
+              <h2 className="text-lg font-semibold mb-4">
+                {filteredSongs.length > 0 ? `Found ${filteredSongs.length} results` : 'No results found'}
+              </h2>
+              <div className="space-y-3">
+                {filteredSongs.map((song) => (
+                  <SongCard 
+                    key={song.id} 
+                    song={song} 
+                    onPlay={onSongPlay} 
+                    formatNumber={formatNumber}
+                    onAddToPlaylist={onAddToPlaylist}
+                  />
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default SearchPage;
