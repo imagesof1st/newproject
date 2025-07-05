@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, createContext, useContext } from 'react';
+import React, { useState, createContext, useContext, useEffect } from 'react';
 import { Home as HomeIcon, Search, Settings } from 'lucide-react';
 import HomePage from '@/components/HomePage';
 import SearchPage from '@/components/SearchPage';
@@ -34,6 +34,7 @@ function MusicPlayerContent() {
     songs,
     playlists,
     likedSongs,
+    lastPlayedSong,
     loading,
     toggleLike,
     createPlaylist,
@@ -54,6 +55,14 @@ function MusicPlayerContent() {
   const [showCreatePlaylistModal, setShowCreatePlaylistModal] = useState(false);
   const [showAddToPlaylistModal, setShowAddToPlaylistModal] = useState(false);
   const [selectedSongForPlaylist, setSelectedSongForPlaylist] = useState<Song | null>(null);
+
+  // Set last played song as current song when data loads
+  useEffect(() => {
+    if (lastPlayedSong && !currentSong) {
+      setCurrentSong(lastPlayedSong);
+      setIsPlaying(false); // Start paused
+    }
+  }, [lastPlayedSong, currentSong]);
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
@@ -209,7 +218,7 @@ function MusicPlayerContent() {
           </div>
         )}
 
-        {/* Music Player */}
+        {/* Music Player - Only show if currentSong exists */}
         {currentSong && (
           <>
             {!isPlayerMaximized ? (

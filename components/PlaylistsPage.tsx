@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Play, Music, Plus, MoreHorizontal, Edit2, Trash2, X } from 'lucide-react';
+import { ArrowLeft, Play, Music, Plus, MoreHorizontal, Edit2, Trash2 } from 'lucide-react';
 import { Playlist, Song } from '@/types';
 import { useTheme } from '@/app/page';
 import SongCard from './SongCard';

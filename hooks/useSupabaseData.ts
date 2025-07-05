@@ -7,6 +7,7 @@ export function useSupabaseData(user: User | null) {
   const [songs, setSongs] = useState<Song[]>([])
   const [playlists, setPlaylists] = useState<Playlist[]>([])
   const [likedSongs, setLikedSongs] = useState<Set<number>>(new Set())
+  const [lastPlayedSong, setLastPlayedSong] = useState<Song | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentSongStartTime, setCurrentSongStartTime] = useState<Date | null>(null)
   const currentSongRef = useRef<string | null>(null)
@@ -55,6 +56,22 @@ export function useSupabaseData(user: User | null) {
       ) || []
 
       setSongs(convertedSongs)
+
+      // Get last played song
+      if (user) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('last_song_file_id')
+          .eq('id', user.id)
+          .single()
+
+        if (userData?.last_song_file_id) {
+          const lastSong = convertedSongs.find(song => song.file_id === userData.last_song_file_id)
+          if (lastSong) {
+            setLastPlayedSong(lastSong)
+          }
+        }
+      }
     } catch (error) {
       console.error('Error fetching songs:', error)
     }
@@ -391,18 +408,22 @@ export function useSupabaseData(user: User | null) {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
-      await fetchSongs()
-      await fetchPlaylists()
+      await Promise.all([fetchSongs(), fetchPlaylists()])
       setLoading(false)
     }
 
-    loadData()
+    if (user) {
+      loadData()
+    } else {
+      setLoading(false)
+    }
   }, [user])
 
   return {
     songs,
     playlists,
     likedSongs: songs.filter(song => song.isLiked),
+    lastPlayedSong,
     loading,
     toggleLike,
     createPlaylist,

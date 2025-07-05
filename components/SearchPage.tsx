@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Clock, TrendingUp, Music } from 'lucide-react';
+import { Search, Music } from 'lucide-react';
 import { Song } from '@/types';
 import { useTheme } from '@/app/page';
 import SongCard from './SongCard';
@@ -14,7 +14,6 @@ interface SearchPageProps {
 const SearchPage: React.FC<SearchPageProps> = ({ songs, onSongPlay, formatNumber, onAddToPlaylist }) => {
   const { isDarkMode } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
-  const [recentSearches] = useState(['Lo-fi beats', 'Chill vibes', 'Study music']);
 
   const filteredSongs = songs.filter(song =>
     song.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -45,27 +44,6 @@ const SearchPage: React.FC<SearchPageProps> = ({ songs, onSongPlay, formatNumber
       <div className="px-4 pb-4">
         {searchQuery === '' ? (
           <>
-            {/* Recent Searches */}
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold mb-4 flex items-center">
-                <Clock className={`mr-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} size={18} />
-                Recent searches
-              </h2>
-              <div className="space-y-3">
-                {recentSearches.map((search, index) => (
-                  <div key={index} className={`flex items-center justify-between p-3 ${isDarkMode ? 'bg-gray-800' : 'bg-white border border-gray-200'} rounded-lg`}>
-                    <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{search}</span>
-                    <button 
-                      onClick={() => setSearchQuery(search)}
-                      className={`${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'} transition-colors`}
-                    >
-                      <Search size={16} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* Browse Categories */}
             <div>
               <h2 className="text-lg font-semibold mb-4">Browse all</h2>

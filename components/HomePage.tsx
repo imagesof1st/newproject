@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, TrendingUp, Music, Plus } from 'lucide-react';
+import { TrendingUp, Music } from 'lucide-react';
 import { Song } from '@/types';
 import { useTheme } from '@/app/page';
 import { useAuth } from '@/hooks/useAuth';
@@ -40,16 +40,6 @@ const HomePage: React.FC<HomePageProps> = ({ songs, onSongPlay, formatNumber, on
             )}
           </div>
         </div>
-
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} size={20} />
-          <input
-            type="text"
-            placeholder="Search songs, artists..."
-            className={`w-full ${isDarkMode ? 'bg-gray-800' : 'bg-white border border-gray-200'} rounded-full py-3 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all`}
-          />
-        </div>
       </div>
 
       {/* Content */}
@@ -86,14 +76,6 @@ const HomePage: React.FC<HomePageProps> = ({ songs, onSongPlay, formatNumber, on
                 onAddToPlaylist={onAddToPlaylist}
               />
             ))}
-          </div>
-          
-          {/* Load More Button */}
-          <div className="mt-6 flex justify-center">
-            <button className={`flex items-center space-x-2 px-6 py-3 ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700 border-gray-700' : 'bg-white hover:bg-gray-50 border-gray-200'} border rounded-full transition-colors`}>
-              <Plus size={18} className={isDarkMode ? 'text-gray-400' : 'text-gray-600'} />
-              <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} font-medium`}>Load More</span>
-            </button>
           </div>
         </div>
       </div>
