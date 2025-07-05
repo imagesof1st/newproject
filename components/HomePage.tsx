@@ -2,6 +2,7 @@ import React from 'react';
 import { Search, TrendingUp, Music, Plus } from 'lucide-react';
 import { Song } from '@/types';
 import { useTheme } from '@/app/page';
+import { useAuth } from '@/hooks/useAuth';
 import SongCard from './SongCard';
 import TrendingSong from './TrendingSong';
 
@@ -14,6 +15,7 @@ interface HomePageProps {
 
 const HomePage: React.FC<HomePageProps> = ({ songs, onSongPlay, formatNumber, onAddToPlaylist }) => {
   const { isDarkMode } = useTheme();
+  const { user } = useAuth();
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
@@ -24,8 +26,18 @@ const HomePage: React.FC<HomePageProps> = ({ songs, onSongPlay, formatNumber, on
             <h1 className="text-2xl font-bold">Good evening</h1>
             <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-sm`}>What do you want to listen to?</p>
           </div>
-          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-            <Music size={20} />
+          <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden">
+            {user?.user_metadata?.avatar_url ? (
+              <img 
+                src={user.user_metadata.avatar_url} 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                <Music size={20} className="text-white" />
+              </div>
+            )}
           </div>
         </div>
 

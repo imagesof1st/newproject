@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { User } from '@supabase/supabase-js'
 import { supabase, DatabaseSong, DatabasePlaylist } from '@/lib/supabase'
 import { Song, Playlist } from '@/types'
@@ -8,6 +8,8 @@ export function useSupabaseData(user: User | null) {
   const [playlists, setPlaylists] = useState<Playlist[]>([])
   const [likedSongs, setLikedSongs] = useState<Set<number>>(new Set())
   const [loading, setLoading] = useState(true)
+  const [currentSongStartTime, setCurrentSongStartTime] = useState<Date | null>(null)
+  const currentSongRef = useRef<string | null>(null)
 
   // Convert database song to UI song format
   const convertDatabaseSong = (dbSong: DatabaseSong, isLiked: boolean = false): Song => ({
@@ -297,26 +299,93 @@ export function useSupabaseData(user: User | null) {
     }
   }
 
-  // Record listening history
-  const recordListeningHistory = async (songId: string, minutesListened: number = 1) => {
+  // Update last song in user profile
+  const updateLastSong = async (songId: string) => {
     if (!user) return
 
     try {
-      const now = new Date()
       const { error } = await supabase
-        .from('history')
-        .upsert({
-          user_id: user.id,
-          song_id: parseInt(songId),
-          last_date: now.toISOString().split('T')[0],
-          last_time: now.toTimeString().split(' ')[0],
-          minutes_listened: minutesListened
-        })
+        .from('users')
+        .update({ last_song_file_id: parseInt(songId) })
+        .eq('id', user.id)
 
       if (error) throw error
     } catch (error) {
-      console.error('Error recording history:', error)
+      console.error('Error updating last song:', error)
     }
+  }
+
+  // Record listening history with proper time tracking
+  const recordListeningHistory = async (songId: string) => {
+    if (!user) return
+
+    // If there's a previous song playing, record its listening time
+    if (currentSongRef.current && currentSongStartTime) {
+      const endTime = new Date()
+      const minutesListened = (endTime.getTime() - currentSongStartTime.getTime()) / (1000 * 60)
+      
+      if (minutesListened > 0.1) { // Only record if listened for more than 6 seconds
+        try {
+          const now = new Date()
+          const { error } = await supabase
+            .from('history')
+            .upsert({
+              user_id: user.id,
+              song_id: parseInt(currentSongRef.current),
+              last_date: now.toISOString().split('T')[0],
+              last_time: now.toTimeString().split(' ')[0],
+              minutes_listened: Math.round(minutesListened * 100) / 100 // Round to 2 decimal places
+            }, {
+              onConflict: 'user_id,song_id,last_date',
+              ignoreDuplicates: false
+            })
+
+          if (error) throw error
+        } catch (error) {
+          console.error('Error recording previous song history:', error)
+        }
+      }
+    }
+
+    // Set new song as current
+    currentSongRef.current = songId
+    setCurrentSongStartTime(new Date())
+    
+    // Update last song in user profile
+    await updateLastSong(songId)
+  }
+
+  // Stop current song tracking (when player is closed)
+  const stopCurrentSongTracking = async () => {
+    if (currentSongRef.current && currentSongStartTime && user) {
+      const endTime = new Date()
+      const minutesListened = (endTime.getTime() - currentSongStartTime.getTime()) / (1000 * 60)
+      
+      if (minutesListened > 0.1) {
+        try {
+          const now = new Date()
+          const { error } = await supabase
+            .from('history')
+            .upsert({
+              user_id: user.id,
+              song_id: parseInt(currentSongRef.current),
+              last_date: now.toISOString().split('T')[0],
+              last_time: now.toTimeString().split(' ')[0],
+              minutes_listened: Math.round(minutesListened * 100) / 100
+            }, {
+              onConflict: 'user_id,song_id,last_date',
+              ignoreDuplicates: false
+            })
+
+          if (error) throw error
+        } catch (error) {
+          console.error('Error recording final song history:', error)
+        }
+      }
+    }
+
+    currentSongRef.current = null
+    setCurrentSongStartTime(null)
   }
 
   useEffect(() => {
@@ -342,6 +411,7 @@ export function useSupabaseData(user: User | null) {
     addSongToPlaylist,
     removeSongFromPlaylist,
     recordListeningHistory,
+    stopCurrentSongTracking,
     refreshData: () => {
       fetchSongs()
       fetchPlaylists()

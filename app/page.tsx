@@ -41,7 +41,8 @@ function MusicPlayerContent() {
     renamePlaylist,
     addSongToPlaylist,
     removeSongFromPlaylist,
-    recordListeningHistory
+    recordListeningHistory,
+    stopCurrentSongTracking
   } = useSupabaseData(user);
 
   const [activeTab, setActiveTab] = useState<'home' | 'search' | 'settings'>('home');
@@ -61,7 +62,7 @@ function MusicPlayerContent() {
   const handleSongPlay = (song: Song) => {
     setCurrentSong(song);
     setIsPlaying(true);
-    // Record listening history
+    // Record listening history and update last song
     recordListeningHistory(song.id);
   };
 
@@ -73,7 +74,9 @@ function MusicPlayerContent() {
     setIsPlayerMaximized(!isPlayerMaximized);
   };
 
-  const closePlayer = () => {
+  const closePlayer = async () => {
+    // Stop tracking current song before closing
+    await stopCurrentSongTracking();
     setCurrentSong(null);
     setIsPlaying(false);
     setIsPlayerMaximized(false);
