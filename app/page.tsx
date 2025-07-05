@@ -25,7 +25,7 @@ const ThemeContext = createContext<ThemeContextType>({
 
 export const useTheme = () => useContext(ThemeContext);
 
-export default function Home() {
+export default function MusicPlayerApp() {
   const [activeTab, setActiveTab] = useState<'home' | 'search' | 'settings'>('home');
   const [currentPage, setCurrentPage] = useState<'main' | 'playlists' | 'liked'>('main');
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
