@@ -28,6 +28,11 @@ const MinimizedPlayer: React.FC<MinimizedPlayerProps> = ({
 }) => {
   const { isDarkMode } = useTheme();
 
+  const handleClose = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    await onClose();
+  };
+
   return (
     <div className={`fixed bottom-20 left-0 right-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-t z-40 shadow-lg`}>
       {/* Progress Bar */}
@@ -99,10 +104,7 @@ const MinimizedPlayer: React.FC<MinimizedPlayerProps> = ({
           
           {/* Close Button */}
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
+            onClick={handleClose}
             className={`p-2 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded-full transition-colors ml-1`}
           >
             <X size={18} className={isDarkMode ? 'text-gray-400' : 'text-gray-600'} />
